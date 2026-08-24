@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)file:///C:/Users/maoul/Downloads/index.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Livre — Registre personnel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./Grand Livre — Registre personnel_files/css2" rel="stylesheet">
+<script src="./Grand Livre — Registre personnel_files/chart.umd.min.js.téléchargement"></script>
+<script src="./Grand Livre — Registre personnel_files/firebase-app-compat.js.téléchargement"></script>
+<script src="./Grand Livre — Registre personnel_files/firebase-auth-compat.js.téléchargement"></script>
+<script src="./Grand Livre — Registre personnel_files/firebase-firestore-compat.js.téléchargement"></script>
+<style>
+  :root {
+    --ink: #1F2E3D;
+    --paper: #EDE4D3;
+    --paper-light: #F5EFE1;
+    --green: #2F4A3D;
+    --red: #8B3A3A;
+    --brass: #A6763D;
+    --line: #C9BFA8;
+    --muted: #8a8168;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .serif { font-family: 'Fraunces', serif; }
+  a { color: inherit; }
+
+  /* ---------- Login screen ---------- */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-card {
+    background: var(--paper-light);
+    border: 1px solid var(--line);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .login-card h1 {
+    font-size: 26px;
+    margin: 6px 0 4px;
+  }
+  .login-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--brass);
+    text-transform: uppercase;
+  }
+  .login-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  #login-error {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+  .login-toggle {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .login-toggle button {
+    background: none; border: none; color: var(--brass); cursor: pointer;
+    font-family: inherit; text-decoration: underline; font-size: 12px;
+  }
+
+  /* ---------- Shared inputs ---------- */
+  input, select {
+    background: var(--paper-light);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 9px 10px;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus { border-color: var(--brass); }
+  button.btn {
+    background: var(--ink);
+    color: var(--paper-light);
+    border: none;
+    padding: 10px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button.btn:hover { background: var(--brass); }
+  button.btn:disabled { opacity: 0.5; cursor: default; }
+  .field { margin-bottom: 12px; }
+
+  /* ---------- App shell ---------- */
+  #app { display: none; min-height: 100vh; }
+  header.letterhead {
+    border-bottom: 3px double var(--ink);
+    padding: 26px 32px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  header.letterhead h1 { font-size: 32px; margin: 4px 0 0; letter-spacing: -0.01em; }
+  #logout-btn {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    font-family: inherit; font-size: 11px; padding: 6px 12px; cursor: pointer;
+  }
+  #logout-btn:hover { border-color: var(--brass); color: var(--brass); }
+  .container { padding: 24px 32px 60px; max-width: 980px; margin: 0 auto; }
+
+  .totals-row { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 32px; }
+  .total-card {
+    border: 1px solid var(--line);
+    border-left: none;
+    padding: 16px 20px;
+    background: var(--paper-light);
+  }
+  .total-card:first-child { border-left: 1px solid var(--line); }
+  .total-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.08em; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .total-value { font-size: 25px; font-weight: 600; }
+  .total-value.solde { border-bottom: 3px double var(--ink); display: inline-block; padding-bottom: 4px; }
+
+  .panel {
+    background: var(--paper-light);
+    border: 1px solid var(--line);
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+  .panel-title {
+    font-size: 13px; letter-spacing: 0.08em; color: var(--brass);
+    text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px; justify-content: space-between;
+  }
+
+  .tab-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 14px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font-family: inherit;
+  }
+  .tab.active { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+  .tab.small { flex: none; font-size: 11px; padding: 5px 10px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .grid-sub { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 10px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .chart-title { font-size: 11px; letter-spacing: 0.08em; color: var(--brass); text-transform: uppercase; margin-bottom: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 8px; font-size: 11px; }
+  .legend span.swatch { width: 8px; height: 8px; display: inline-block; margin-right: 5px; }
+
+  .ledger-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .ledger { border-left: 2px solid var(--red); }
+  .ledger-row {
+    display: grid; grid-template-columns: 90px 1fr 120px 110px 30px;
+    align-items: center; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .ledger-row:hover { background: rgba(31,46,61,0.04); }
+  .ledger-empty { padding: 36px 24px; text-align: center; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; justify-self: end; }
+  .del-btn:hover { color: var(--red); }
+
+  .sub-row {
+    display: grid; grid-template-columns: 1fr 110px 70px 28px;
+    align-items: center; gap: 10px; padding: 8px 4px;
+    border-top: 1px solid var(--line); font-size: 13px;
+  }
+
+  @media (max-width: 640px) {
+    .charts-row, .grid-2 { grid-template-columns: 1fr; }
+    .totals-row { grid-template-columns: 1fr; }
+    .total-card { border-left: 1px solid var(--line) !important; border-top: none; }
+    .grid-sub { grid-template-columns: 1fr 1fr; }
+    .ledger-row { grid-template-columns: 70px 1fr 40px; }
+    .ledger-row span:nth-child(3) { display: none; }
+    header.letterhead, .container { padding-left: 18px; padding-right: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="login-screen" style="display: flex;">
+  <div class="login-card">
+    <div class="login-eyebrow">Registre personnel</div>
+    <h1 class="serif" id="login-title">Grand Livre</h1>
+    <div class="login-sub">Connecte-toi pour accéder à ton registre, sur n'importe quel appareil.</div>
+
+    <form id="login-form">
+      <div class="field">
+        <input type="email" id="login-email" placeholder="Email" required="" autocomplete="email">
+      </div>
+      <div class="field">
+        <input type="password" id="login-password" placeholder="Mot de passe (6 caractères min.)" required="" autocomplete="current-password" minlength="6">
+      </div>
+      <button type="submit" class="btn" id="login-submit" style="width:100%; justify-content:center;">Se connecter</button>
+      <div id="login-error"></div>
+    </form>
+
+    <div class="login-toggle">
+      <span id="toggle-text">Pas encore de compte ?</span>
+      <button type="button" id="toggle-mode">Créer un compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" style="display: none;">
+  <header class="letterhead">
+    <div>
+      <div class="login-eyebrow">Registre personnel</div>
+      <h1 class="serif">Grand Livre</h1>
+    </div>
+    <button id="logout-btn">Déconnexion</button>
+  </header>
+
+  <div class="container">
+
+    <div class="totals-row">
+      <div class="total-card">
+        <div class="total-label">Revenus</div>
+        <div class="total-value serif" id="total-revenus" style="color: var(--green);">0,00 €</div>
+      </div>
+      <div class="total-card">
+        <div class="total-label">Dépenses</div>
+        <div class="total-value serif" id="total-depenses" style="color: var(--red);">0,00 €</div>
+      </div>
+      <div class="total-card">
+        <div class="total-label">Solde</div>
+        <div class="total-value serif solde" id="total-solde">0,00 €</div>
+      </div>
+    </div>
+
+    <!-- Add entry -->
+    <form class="panel serif" id="entry-form">
+      <div class="panel-title">Nouvelle écriture</div>
+      <div class="tab-row">
+        <button type="button" class="tab active" id="tab-revenu" data-type="revenu">+ Revenu</button>
+        <button type="button" class="tab" id="tab-depense" data-type="depense">− Dépense</button>
+      </div>
+      <div class="grid-2">
+        <input type="text" inputmode="decimal" id="entry-amount" placeholder="Montant (€)" required="">
+        <select id="entry-category"><option value="Salaire">Salaire</option><option value="Freelance">Freelance</option><option value="Investissements">Investissements</option><option value="Cadeau">Cadeau</option><option value="Autre">Autre</option></select>
+      </div>
+      <div class="grid-2">
+        <input type="text" id="entry-description" placeholder="Description (optionnel)">
+        <input type="date" id="entry-date" required="">
+      </div>
+      <button type="submit" class="btn">+ Ajouter l'écriture</button>
+    </form>
+
+    <!-- Subscriptions -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>Abonnements</span>
+        <span id="subs-monthly-total" style="color: var(--red); text-transform: none; letter-spacing: 0;"></span>
+      </div>
+      <form id="sub-form" class="grid-sub" style="margin-bottom: 10px;">
+        <input type="text" id="sub-name" placeholder="Nom (ex. Netflix)" required="">
+        <input type="text" inputmode="decimal" id="sub-amount" placeholder="Montant (€)" required="">
+        <select id="sub-freq">
+          <option value="mensuel">/ mois</option>
+          <option value="annuel">/ an</option>
+        </select>
+        <button type="submit" class="btn" style="padding: 8px 14px;">+</button>
+      </form>
+      <div id="subs-list"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row" id="charts-row" style="display:none;">
+      <div class="panel" id="pie-panel" style="display:none;">
+        <div class="chart-title">Répartition des dépenses</div>
+        <canvas id="pie-chart" height="200"></canvas>
+        <div class="legend" id="pie-legend"></div>
+      </div>
+      <div class="panel" id="line-panel" style="display:none;">
+        <div class="chart-title">Évolution mensuelle</div>
+        <canvas id="line-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Ledger -->
+    <div>
+      <div class="ledger-header">
+        <span class="serif" style="font-size:18px; font-weight:600;">Écritures</span>
+        <div style="display:flex; gap:6px;">
+          <button class="tab small active" data-filter="tous">Tous</button>
+          <button class="tab small" data-filter="revenu">Revenus</button>
+          <button class="tab small" data-filter="depense">Dépenses</button>
+        </div>
+      </div>
+      <div id="ledger-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURATION FIREBASE
+   Remplace les valeurs ci-dessous par celles de TON projet Firebase.
+   Va dans la console Firebase > Paramètres du projet > Tes applications
+   > Config, et copie l'objet firebaseConfig ici.
+===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCwiiHY4tVWaaOi1YNH_SieLH_zDLoPOGM",
+  authDomain: "mon-grand-livre.firebaseapp.com",
+  projectId: "mon-grand-livre",
+  storageBucket: "mon-grand-livre.firebasestorage.app",
+  messagingSenderId: "77317005450",
+  appId: "1:77317005450:web:5d5ffdd4e2115173ee0d73"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ---------------------------- CONSTANTS ---------------------------- */
+const CATEGORIES_REVENU = ["Salaire", "Freelance", "Investissements", "Cadeau", "Autre"];
+const CATEGORIES_DEPENSE = ["Logement", "Alimentation", "Transport", "Loisirs", "Santé", "Abonnements", "Autre"];
+const PIE_COLORS = ["#2F4A3D", "#8B3A3A", "#A6763D", "#4A6670", "#6B4C3B", "#7A5C7E", "#3D5A5A"];
+
+const eur = (n) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+const uid_ = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+let currentUser = null;
+let entries = [];
+let subscriptions = [];
+let currentType = "revenu";
+let currentFilter = "tous";
+let pieChart = null;
+let lineChart = null;
+let unsubEntries = null;
+let unsubSubs = null;
+
+/* ---------------------------- AUTH UI ---------------------------- */
+let isSignup = false;
+const toggleModeBtn = document.getElementById("toggle-mode");
+const toggleText = document.getElementById("toggle-text");
+const loginSubmit = document.getElementById("login-submit");
+const loginTitle = document.getElementById("login-title");
+const loginError = document.getElementById("login-error");
+
+toggleModeBtn.addEventListener("click", () => {
+  isSignup = !isSignup;
+  loginSubmit.textContent = isSignup ? "Créer mon compte" : "Se connecter";
+  toggleText.textContent = isSignup ? "Déjà un compte ?" : "Pas encore de compte ?";
+  toggleModeBtn.textContent = isSignup ? "Se connecter" : "Créer un compte";
+  loginError.textContent = "";
+});
+
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginError.textContent = "";
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  loginSubmit.disabled = true;
+  try {
+    if (isSignup) {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+  } catch (err) {
+    loginError.textContent = translateAuthError(err.code);
+  } finally {
+    loginSubmit.disabled = false;
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click", () => auth.signOut());
+
+function translateAuthError(code) {
+  const map = {
+    "auth/email-already-in-use": "Ce compte existe déjà — connecte-toi plutôt.",
+    "auth/invalid-email": "Adresse email invalide.",
+    "auth/weak-password": "Mot de passe trop court (6 caractères minimum).",
+    "auth/wrong-password": "Mot de passe incorrect.",
+    "auth/user-not-found": "Aucun compte avec cet email.",
+    "auth/invalid-credential": "Email ou mot de passe incorrect.",
+    "auth/too-many-requests": "Trop de tentatives, réessaie plus tard.",
+  };
+  return map[code] || "Une erreur est survenue. Réessaie.";
+}
+
+auth.onAuthStateChanged((user) => {
+  if (unsubEntries) { unsubEntries(); unsubEntries = null; }
+  if (unsubSubs) { unsubSubs(); unsubSubs = null; }
+  if (user) {
+    currentUser = user;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    attachListeners();
+  } else {
+    currentUser = null;
+    entries = []; subscriptions = [];
+    document.getElementById("app").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+  }
+});
+
+/* ---------------------------- FIRESTORE SYNC ---------------------------- */
+function attachListeners() {
+  const entriesRef = db.collection("users").doc(currentUser.uid).collection("entries").orderBy("date", "desc");
+  unsubEntries = entriesRef.onSnapshot((snap) => {
+    entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderAll();
+  });
+
+  const subsRef = db.collection("users").doc(currentUser.uid).collection("subscriptions").orderBy("createdAt", "desc");
+  unsubSubs = subsRef.onSnapshot((snap) => {
+    subscriptions = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderSubscriptions();
+  });
+}
+
+function userCol(name) {
+  return db.collection("users").doc(currentUser.uid).collection(name);
+}
+
+/* ---------------------------- ENTRY FORM ---------------------------- */
+function populateCategorySelect() {
+  const sel = document.getElementById("entry-category");
+  const cats = currentType === "revenu" ? CATEGORIES_REVENU : CATEGORIES_DEPENSE;
+  sel.innerHTML = cats.map((c) => `<option value="${c}">${c}</option>`).join("");
+}
+populateCategorySelect();
+document.getElementById("entry-date").value = new Date().toISOString().slice(0, 10);
+
+document.getElementById("tab-revenu").addEventListener("click", () => setType("revenu"));
+document.getElementById("tab-depense").addEventListener("click", () => setType("depense"));
+function setType(t) {
+  currentType = t;
+  document.getElementById("tab-revenu").classList.toggle("active", t === "revenu");
+  document.getElementById("tab-depense").classList.toggle("active", t === "depense");
+  populateCategorySelect();
+}
+
+document.getElementById("entry-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const amountVal = parseFloat(document.getElementById("entry-amount").value.replace(",", "."));
+  if (!amountVal || amountVal <= 0) return;
+  const entry = {
+    type: currentType,
+    amount: amountVal,
+    category: document.getElementById("entry-category").value,
+    description: document.getElementById("entry-description").value.trim(),
+    date: document.getElementById("entry-date").value,
+    createdAt: Date.now(),
+  };
+  await userCol("entries").add(entry);
+  document.getElementById("entry-amount").value = "";
+  document.getElementById("entry-description").value = "";
+});
+
+/* ---------------------------- SUBSCRIPTIONS ---------------------------- */
+document.getElementById("sub-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const val = parseFloat(document.getElementById("sub-amount").value.replace(",", "."));
+  const name = document.getElementById("sub-name").value.trim();
+  if (!val || val <= 0 || !name) return;
+  await userCol("subscriptions").add({
+    name,
+    amount: val,
+    frequency: document.getElementById("sub-freq").value,
+    createdAt: Date.now(),
+  });
+  document.getElementById("sub-name").value = "";
+  document.getElementById("sub-amount").value = "";
+});
+
+function renderSubscriptions() {
+  const list = document.getElementById("subs-list");
+  const totalEl = document.getElementById("subs-monthly-total");
+  const monthly = subscriptions.reduce((s, sub) => s + (sub.frequency === "annuel" ? sub.amount / 12 : sub.amount), 0);
+  totalEl.textContent = subscriptions.length ? `${eur(monthly)} / mois` : "";
+
+  if (!subscriptions.length) { list.innerHTML = ""; return; }
+  list.innerHTML = subscriptions.map((s) => `
+    <div class="sub-row">
+      <span>${escapeHtml(s.name)}</span>
+      <span style="text-align:right; color: var(--red); font-weight:600;">${eur(s.amount)}</span>
+      <span style="font-size:11px; color: var(--muted);">${s.frequency === "annuel" ? "/ an" : "/ mois"}</span>
+      <button class="del-btn" onclick="removeSubscription('${s.id}')">✕</button>
+    </div>
+  `).join("");
+}
+
+async function removeSubscription(id) {
+  await userCol("subscriptions").doc(id).delete();
+}
+
+/* ---------------------------- LEDGER FILTER ---------------------------- */
+document.querySelectorAll(".tab.small").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab.small").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    renderLedger();
+  });
+});
+
+/* ---------------------------- RENDER ---------------------------- */
+function renderAll() {
+  renderTotals();
+  renderCharts();
+  renderLedger();
+}
+
+function renderTotals() {
+  const revenus = entries.filter((e) => e.type === "revenu").reduce((s, e) => s + e.amount, 0);
+  const depenses = entries.filter((e) => e.type === "depense").reduce((s, e) => s + e.amount, 0);
+  const solde = revenus - depenses;
+  document.getElementById("total-revenus").textContent = eur(revenus);
+  document.getElementById("total-depenses").textContent = eur(depenses);
+  const soldeEl = document.getElementById("total-solde");
+  soldeEl.textContent = (solde < 0 ? "−" : "") + eur(Math.abs(solde));
+}
+
+function renderLedger() {
+  const container = document.getElementById("ledger-container");
+  const filtered = currentFilter === "tous" ? entries : entries.filter((e) => e.type === currentFilter);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="ledger-empty">Aucune écriture pour l'instant. Ajoute ton premier revenu ou dépense ci-dessus.</div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="ledger">` + filtered.map((e) => {
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+    const sign = e.type === "revenu" ? "+" : "−";
+    const color = e.type === "revenu" ? "var(--green)" : "var(--red)";
+    return `
+      <div class="ledger-row">
+        <span style="color: var(--muted); font-size:11px;">${dateStr}</span>
+        <span>${e.description ? escapeHtml(e.description) : '<span style="color:var(--muted); font-style:italic;">—</span>'}</span>
+        <span style="font-size:11px; color: var(--brass);">${escapeHtml(e.category)}</span>
+        <span style="text-align:right; color:${color}; font-weight:600;">${sign}${eur(e.amount)}</span>
+        <button class="del-btn" onclick="removeEntry('${e.id}')">✕</button>
+      </div>
+    `;
+  }).join("") + `</div>`;
+}
+
+async function removeEntry(id) {
+  await userCol("entries").doc(id).delete();
+}
+
+function renderCharts() {
+  const chartsRow = document.getElementById("charts-row");
+  const piePanel = document.getElementById("pie-panel");
+  const linePanel = document.getElementById("line-panel");
+
+  if (!entries.length) { chartsRow.style.display = "none"; return; }
+  chartsRow.style.display = "grid";
+
+  // Pie: répartition dépenses par catégorie
+  const catMap = {};
+  entries.filter((e) => e.type === "depense").forEach((e) => {
+    catMap[e.category] = (catMap[e.category] || 0) + e.amount;
+  });
+  const catLabels = Object.keys(catMap);
+  if (catLabels.length) {
+    piePanel.style.display = "block";
+    const ctx = document.getElementById("pie-chart").getContext("2d");
+    const data = catLabels.map((k) => catMap[k]);
+    const colors = catLabels.map((_, i) => PIE_COLORS[i % PIE_COLORS.length]);
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(ctx, {
+      type: "doughnut",
+      data: { labels: catLabels, datasets: [{ data, backgroundColor: colors, borderColor: "#F5EFE1", borderWidth: 2 }] },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.label}: ${eur(c.raw)}` } } },
+        cutout: "55%",
+      },
+    });
+    document.getElementById("pie-legend").innerHTML = catLabels.map((l, i) =>
+      `<span><span class="swatch" style="background:${colors[i]}"></span>${escapeHtml(l)}</span>`
+    ).join("");
+  } else {
+    piePanel.style.display = "none";
+  }
+
+  // Line: évolution mensuelle
+  const monthMap = {};
+  [...entries].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((e) => {
+    const key = e.date.slice(0, 7);
+    if (!monthMap[key]) monthMap[key] = { revenus: 0, depenses: 0 };
+    if (e.type === "revenu") monthMap[key].revenus += e.amount;
+    else monthMap[key].depenses += e.amount;
+  });
+  const months = Object.keys(monthMap).sort();
+  if (months.length > 1) {
+    linePanel.style.display = "block";
+    const labels = months.map((m) => new Date(m + "-01").toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }));
+    const revenusData = months.map((m) => monthMap[m].revenus);
+    const depensesData = months.map((m) => monthMap[m].depenses);
+    const soldeData = months.map((m) => monthMap[m].revenus - monthMap[m].depenses);
+    const ctx2 = document.getElementById("line-chart").getContext("2d");
+    if (lineChart) lineChart.destroy();
+    lineChart = new Chart(ctx2, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Revenus", data: revenusData, borderColor: "#2F4A3D", backgroundColor: "#2F4A3D", tension: 0.25 },
+          { label: "Dépenses", data: depensesData, borderColor: "#8B3A3A", backgroundColor: "#8B3A3A", tension: 0.25 },
+          { label: "Solde", data: soldeData, borderColor: "#A6763D", backgroundColor: "#A6763D", borderDash: [4, 3], tension: 0.25 },
+        ],
+      },
+      options: {
+        plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${eur(c.raw)}` } } },
+        scales: { y: { ticks: { callback: (v) => eur(v) } } },
+      },
+    });
+  } else {
+    linePanel.style.display = "none";
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+
+
+</body></html>
